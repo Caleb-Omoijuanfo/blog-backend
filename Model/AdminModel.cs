@@ -24,8 +24,11 @@ namespace Pempo_backend.Model
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public byte[] ProfileImage { get; set; }
+        public byte[] Salt { get; set; }
+        public string Password { get; set; }
+        #nullable enable
+        public byte[]? ProfileImage { get; set; }
+        #nullable disable
     }
 
     public class Post : PempoBase

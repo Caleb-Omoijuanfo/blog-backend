@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pempo_backend.Model;
 
 namespace Pempo_backend.Migrations
 {
     [DbContext(typeof(PempoContext))]
-    partial class PempoContextModelSnapshot : ModelSnapshot
+    [Migration("20200917104637_nullable_profileImage_column")]
+    partial class nullable_profileImage_column
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,9 +47,6 @@ namespace Pempo_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("ProfileImage")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<byte[]>("Salt")
                         .HasColumnType("varbinary(max)");
 
                     b.HasKey("Id");
