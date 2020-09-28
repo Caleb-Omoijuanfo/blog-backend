@@ -1,21 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pempo_backend.Model;
+using static Pempo_backend.PempoEnums.PempoEnums;
+
 
 namespace Pempo_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PostsController : ControllerBase
+    public class PostController : ControllerBase
     {
         private readonly PempoContext _context;
 
-        public PostsController(PempoContext context)
+        public PostController(PempoContext context)
         {
             _context = context;
         }
@@ -76,13 +79,48 @@ namespace Pempo_backend.Controllers
         // POST: api/Posts
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPost]
-        public async Task<ActionResult<Post>> PostPost(Post post)
+        [HttpPost("Post")]
+        public async Task<ActionResult> CreatePost(Post post)
         {
-            _context.tblPost.Add(post);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    var id = int.Parse(User.Claims.First(u => u.Type == ClaimTypes.Name).Value);
 
-            return CreatedAtAction("GetPost", new { id = post.Id }, post);
+                    var postExists = _context.tblPost.Where(m => m.AdminId == id && m.Title == post.Title).FirstOrDefault();
+
+                    if (postExists != null)
+                    {
+                        return BadRequest(new
+                        {
+                            Message = "Post already exists",
+                            ResponseCode = ePempoStatus.failure
+                        });
+                    }
+                    else
+                    {
+                        _context.tblPost.Add(post);
+                        var saved = await _context.SaveChangesAsync();
+
+                        return CreatedAtAction("GetPost", new { id = post.Id }, saved);
+                    }                   
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Wrong/Invalid token"
+                    });
+                }                                                                                       
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }            
         }
 
         // DELETE: api/Posts/5

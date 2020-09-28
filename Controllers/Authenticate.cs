@@ -9,32 +9,35 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using static Pempo_backend.PempoEnums.PempoEnums;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Pempo_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PempoController : ControllerBase
+    public class AuthenticationController : ControllerBase
     {
         private readonly PempoContext _context;
-        private IConfiguration _config;
+        private readonly IConfiguration _config;
 
-        public PempoController(PempoContext context, IConfiguration config)
+        public AuthenticationController(PempoContext context, IConfiguration config)
         {
             _context = context;
             _config = config;
         }
 
-        private string GenerateWebToken(Admin admin)
+        private string GenerateWebToken(Login login, Admin admin)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[] {               
-                new Claim(ClaimTypes.Email, admin.Email)
+                new Claim(ClaimTypes.GivenName, $"{admin.FirstName} {admin.LastName}"),
+                new Claim(ClaimTypes.Email, login.Email),
+                new Claim(ClaimTypes.Name, admin.Id.ToString())
                };
-
+             
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],
                 _config["Jwt:Issuer"],
                 claims,
@@ -43,6 +46,7 @@ namespace Pempo_backend.Controllers
 
             return tokenHandler.WriteToken(token);
         }
+        
         // POST: api/Admins
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
@@ -98,30 +102,39 @@ namespace Pempo_backend.Controllers
             }           
         }
 
+        [AllowAnonymous]
         [HttpPost("Login")]
-        public ActionResult Login(Admin admin)
+        public ActionResult Login([FromBody] Login login)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var userExist = _context.tblAdmin.Where(m => m.Email == admin.Email).FirstOrDefault();
+                    var userExist = _context.tblAdmin.Where(m => m.Email == login.Email).FirstOrDefault();
 
                     if (userExist != null)
                     {
                         var userSalt = userExist.Salt;
                         var userHash = userExist.Password;
 
-                        var newHash = Utilities.Utilities.HashPassword(admin.Password, userSalt);
-
-                        //compare hash values
+                        var newHash = Utilities.Utilities.HashPassword(login.Password, userSalt);                        
 
                         if (newHash == userHash)
                         {
-                            var token = GenerateWebToken(admin);
+                            var token = GenerateWebToken(login, userExist);
+
+                            Admin adminObject = new Admin
+                            {
+                                FirstName = userExist.FirstName,
+                                LastName = userExist.LastName,
+                                ProfileImage = userExist.ProfileImage,
+                                Email = userExist.Email,
+                                Id = userExist.Id
+                            };
 
                             return Ok(new
                             {
+                                Admin = adminObject,
                                 Token = token
                             });
                         }
@@ -129,7 +142,7 @@ namespace Pempo_backend.Controllers
                         {
                             return BadRequest(new
                             {
-                                Message = "Hash doesn't match"
+                                Message = "Password incorrect"
                             });
                         }
                     }
@@ -157,27 +170,6 @@ namespace Pempo_backend.Controllers
                     Message = ex.Message
                 });                
             }          
-        }
-
-        // DELETE: api/Admins/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Admin>> DeleteAdmin(int id)
-        {
-            var admin = await _context.tblAdmin.FindAsync(id);
-            if (admin == null)
-            {
-                return NotFound();
-            }
-
-            _context.tblAdmin.Remove(admin);
-            await _context.SaveChangesAsync();
-
-            return admin;
-        }
-
-        private bool AdminExists(int id)
-        {
-            return _context.tblAdmin.Any(e => e.Id == id);
-        }
+        }       
     }
 }
