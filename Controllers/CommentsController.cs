@@ -21,7 +21,7 @@ namespace Pempo_backend.Controllers
             _context = context;
         }                      
         
-        [HttpPost("Comment/Create")]
+        [HttpPost("PostComments")]
         public async Task<ActionResult<Comments>> PostComments(Comments comments)
         {
             try
@@ -47,29 +47,6 @@ namespace Pempo_backend.Controllers
                     ex.Message
                 });               
             }          
-        }
-        
-        [HttpGet("Comments")]
-        public async Task<ActionResult<Comments>> FetchComments(int PostId)
-        {
-            var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == PostId).ToListAsync();
-
-            if (comments == null)
-            {
-                return NotFound(new
-                {
-                    Message = "No comments",
-                    responseCode = ePempoStatus.notFound
-                });
-            }
-            else
-            {
-                return Ok(new
-                {
-                    Date = comments,
-                    responseCode = ePempoStatus.success
-                });
-            }         
-        }               
+        }                              
     }
 }

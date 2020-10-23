@@ -65,17 +65,56 @@ namespace Pempo_backend.Controllers
         }
 
         // GET: api/Posts/5
-        [HttpGet("{id}")]
+        [HttpGet("Fetch/One")]
         public async Task<ActionResult<Post>> GetPost(int id)
         {
-            var post = await _context.tblPost.FindAsync(id);
-
-            if (post == null)
+            try
             {
-                return NotFound();
-            }
+                if (User.Identity.IsAuthenticated)
+                {
+                    var post = _context.tblPost.AsNoTracking().Where(p => p.Id == id).FirstOrDefault();
+                    var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == id).ToListAsync();
+                    var likes = await _context.tblLikes.AsNoTracking().Where(l => l.PostId == id).ToListAsync();
 
-            return post;
+                    if (post == null)
+                    {
+                        return NotFound(new
+                        {
+                            Message = "Post does not exist",
+                            responseCode = ePempoStatus.notFound
+                        });
+                    }
+                    else
+                    {
+                        return Ok(new
+                        {
+                            Message = "Post retrieved successfully!!",
+                            Data = new
+                            {
+                                post,
+                                comments,
+                                likes
+                            },
+                            responeCode = ePempoStatus.success
+                        });
+                    }
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Wrong/Expired token"                        
+                    });
+                }               
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message,
+                    responseCode = ePempoStatus.failure
+                });   
+            }            
         }
 
         // PUT: api/Posts/5
