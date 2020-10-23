@@ -50,9 +50,10 @@ namespace Pempo_backend.Model
         public Post Post { get; set; }
     }
 
-    public class Comment : PempoBase
+    public class Comments : PempoBase
     {
         public int PostId { get; set; }
+        public string Comment { get; set; }
 
         [ForeignKey("PostId")]
         public Post Post { get; set; }

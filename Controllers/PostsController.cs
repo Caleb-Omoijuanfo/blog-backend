@@ -24,10 +24,44 @@ namespace Pempo_backend.Controllers
         }
 
         // GET: api/Posts
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Post>>> GettblPost()
+        [HttpGet("FetchPost")]
+        public async Task<ActionResult<IEnumerable<Post>>> FetchPosts(int start, int length)
         {
-            return await _context.tblPost.ToListAsync();
+            try
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    var id = int.Parse(User.Claims.First(u => u.Type == ClaimTypes.Name).Value);
+
+                    var listCount = _context.tblPost.AsNoTracking().Count();
+                    int value = (listCount - start < 0 ? 1 : (listCount - start));
+
+
+                    var posts = await _context.tblPost.AsNoTracking().OrderByDescending(m => m.DateLastUpdated).Skip(start).Take(Math.Min(length, value)).ToListAsync();
+                                     
+
+                    return Ok(new
+                    {
+                        recordsTotal = listCount,
+                        recordsFiltered = length > listCount ? listCount : length,
+                        Data = listCount > 0 ? posts : null
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Wrong/Invalid token"
+                    });
+                }
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }            
         }
 
         // GET: api/Posts/5
@@ -79,7 +113,7 @@ namespace Pempo_backend.Controllers
         // POST: api/Posts
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPost("Post")]
+        [HttpPost("CreatePost")]
         public async Task<ActionResult> CreatePost(Post post)
         {
             try

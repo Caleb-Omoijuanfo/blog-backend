@@ -16,7 +16,7 @@ namespace Pempo_backend.Model
         public DbSet<Admin> tblAdmin { get; set; }
         public DbSet<Post> tblPost { get; set;  }
         public DbSet<Media> tblMedia { get; set; }
-        public DbSet<Comment> tblComments { get; set; }
+        public DbSet<Comments> tblComments { get; set; }
         public DbSet<Likes> tblLikes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
