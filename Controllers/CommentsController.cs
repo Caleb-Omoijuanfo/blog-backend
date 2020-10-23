@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pempo_backend.Model;
+using static Pempo_backend.PempoEnums.PempoEnums;
 
 namespace Pempo_backend.Controllers
 {
@@ -19,10 +20,7 @@ namespace Pempo_backend.Controllers
         {
             _context = context;
         }                      
-
-        // POST: api/Comments
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        
         [HttpPost("Comment/Create")]
         public async Task<ActionResult<Comments>> PostComments(Comments comments)
         {
@@ -50,21 +48,28 @@ namespace Pempo_backend.Controllers
                 });               
             }          
         }
-
-        // DELETE: api/Comments/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Comments>> DeleteComments(int id)
+        
+        [HttpGet("Comments")]
+        public async Task<ActionResult<Comments>> FetchComments(int PostId)
         {
-            var comments = await _context.tblComments.FindAsync(id);
+            var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == PostId).ToListAsync();
+
             if (comments == null)
             {
-                return NotFound();
+                return NotFound(new
+                {
+                    Message = "No comments",
+                    responseCode = ePempoStatus.notFound
+                });
             }
-
-            _context.tblComments.Remove(comments);
-            await _context.SaveChangesAsync();
-
-            return comments;
-        }        
+            else
+            {
+                return Ok(new
+                {
+                    Date = comments,
+                    responseCode = ePempoStatus.success
+                });
+            }         
+        }               
     }
 }

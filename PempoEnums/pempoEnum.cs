@@ -10,7 +10,8 @@ namespace Pempo_backend.PempoEnums
        public enum ePempoStatus
         {
             success,
-            failure
+            failure,
+            notFound
         }
     }
 }
