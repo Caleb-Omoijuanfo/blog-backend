@@ -116,37 +116,61 @@ namespace Pempo_backend.Controllers
                 });   
             }            
         }
-
-        // PUT: api/Posts/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPost(int id, Post post)
+        
+        [HttpPut("Update")]
+        public async Task<IActionResult> UpdatePost(int id, Post post)
         {
-            if (id != post.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(post).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PostExists(id))
+                if (User.Identity.IsAuthenticated)
                 {
-                    return NotFound();
+                    if (id != post.Id)
+                    {
+                        return BadRequest (new 
+                        { 
+                            Message = "Incorrect post id"
+                        });
+                    }
+
+                    _context.Entry(post).State = EntityState.Modified;
+
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        if (!PostExists(id))
+                        {
+                            return NotFound(new
+                            { 
+                                Message = "Post not found",
+                                responseCode = ePempoStatus.notFound
+                            });
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+
+                    return NoContent();
                 }
                 else
                 {
-                    throw;
+                    return BadRequest(new
+                    {
+                        Message = "Wrong/Expired token"
+                    });
                 }
             }
-
-            return NoContent();
+            catch (Exception)
+            {
+                return BadRequest(new
+                {
+                    Message = "Something went wrong"
+                });               
+            }            
         }
 
         // POST: api/Posts
@@ -197,19 +221,57 @@ namespace Pempo_backend.Controllers
         }
 
         // DELETE: api/Posts/5
-        [HttpDelete("{id}")]
+        [HttpDelete("Delete")]
         public async Task<ActionResult<Post>> DeletePost(int id)
         {
-            var post = await _context.tblPost.FindAsync(id);
-            if (post == null)
+            try
             {
-                return NotFound();
+                if (User.Identity.IsAuthenticated)
+                {
+                    var post = await _context.tblPost.FindAsync(id);
+                    var comments = await _context.tblComments.Where(c => c.PostId == id).ToListAsync();
+
+                    if (post == null)
+                    {
+                        return NotFound(new
+                        {
+                            Message = "Post not found!",
+                            responseCode = ePempoStatus.notFound
+                        });
+                    }
+                    else
+                    {
+                        _context.tblPost.Remove(post);
+                        foreach (var comment in comments)
+                        {
+                            _context.tblComments.Remove(comment);
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+                   
+
+                    return Ok(new
+                    {
+                        Message = "Post deleted successfully!",
+                        responseCode = ePempoStatus.success
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Wrong/Expired token"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    ex.Message
+                });
             }
 
-            _context.tblPost.Remove(post);
-            await _context.SaveChangesAsync();
-
-            return post;
         }
 
         private bool PostExists(int id)
