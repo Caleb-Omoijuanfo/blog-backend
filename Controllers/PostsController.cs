@@ -28,32 +28,20 @@ namespace Pempo_backend.Controllers
         public async Task<ActionResult<IEnumerable<Post>>> FetchPosts(int start, int length)
         {
             try
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    var id = int.Parse(User.Claims.First(u => u.Type == ClaimTypes.Name).Value);
-
-                    var listCount = _context.tblPost.AsNoTracking().Count();
-                    int value = (listCount - start < 0 ? 1 : (listCount - start));
+            {                                
+                var listCount = _context.tblPost.AsNoTracking().Count();
+                int value = (listCount - start < 0 ? 1 : (listCount - start));
 
 
-                    var posts = await _context.tblPost.AsNoTracking().OrderByDescending(m => m.DateLastUpdated).Skip(start).Take(Math.Min(length, value)).ToListAsync();
+                var posts = await _context.tblPost.AsNoTracking().OrderByDescending(m => m.DateLastUpdated).Skip(start).Take(Math.Min(length, value)).ToListAsync();
                                      
 
-                    return Ok(new
-                    {
-                        recordsTotal = listCount,
-                        recordsFiltered = length > listCount ? listCount : length,
-                        Data = listCount > 0 ? posts : null
-                    });
-                }
-                else
+                return Ok(new
                 {
-                    return BadRequest(new
-                    {
-                        Message = "Wrong/Invalid token"
-                    });
-                }
+                    recordsTotal = listCount,
+                    recordsFiltered = length > listCount ? listCount : length,
+                    Data = listCount > 0 ? posts : null
+                });                
             } 
             catch (Exception ex)
             {
@@ -69,43 +57,33 @@ namespace Pempo_backend.Controllers
         public async Task<ActionResult<Post>> GetPost(int id)
         {
             try
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    var post = _context.tblPost.AsNoTracking().Where(p => p.Id == id).FirstOrDefault();
-                    var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == id).ToListAsync();
-                    var likes = await _context.tblLikes.AsNoTracking().Where(l => l.PostId == id).ToListAsync();
+            {                
+                var post = _context.tblPost.AsNoTracking().Where(p => p.Id == id).FirstOrDefault();
+                var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == id).ToListAsync();
+                var likes = await _context.tblLikes.AsNoTracking().Where(l => l.PostId == id).ToListAsync();
 
-                    if (post == null)
+                if (post == null)
+                {
+                    return NotFound(new
                     {
-                        return NotFound(new
-                        {
-                            Message = "Post does not exist",
-                            responseCode = ePempoStatus.notFound
-                        });
-                    }
-                    else
-                    {
-                        return Ok(new
-                        {
-                            Message = "Post retrieved successfully!!",
-                            Data = new
-                            {
-                                post,
-                                comments,
-                                likes
-                            },
-                            responeCode = ePempoStatus.success
-                        });
-                    }
+                        Message = "Post does not exist",
+                        responseCode = ePempoStatus.notFound
+                    });
                 }
                 else
                 {
-                    return BadRequest(new
+                    return Ok(new
                     {
-                        Message = "Wrong/Expired token"                        
+                        Message = "Post retrieved successfully!!",
+                        Data = new
+                        {
+                            post,
+                            comments,
+                            likes
+                        },
+                        responeCode = ePempoStatus.success
                     });
-                }               
+                }                              
             }
             catch (Exception ex)
             {

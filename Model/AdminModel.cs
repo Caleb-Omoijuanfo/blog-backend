@@ -34,7 +34,8 @@ namespace Pempo_backend.Model
     public class Post : PempoBase
     {
         public string Title { get; set; }
-        public string Content { get; set; }    
+        public string Content { get; set; }        
+        public string FeaturedImage { get; set; }        
         public int AdminId { get; set; }
 
         [ForeignKey("AdminId")]

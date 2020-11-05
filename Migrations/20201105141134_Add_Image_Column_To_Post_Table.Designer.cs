@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pempo_backend.Model;
 
 namespace Pempo_backend.Migrations
 {
     [DbContext(typeof(PempoContext))]
-    partial class PempoContextModelSnapshot : ModelSnapshot
+    [Migration("20201105141134_Add_Image_Column_To_Post_Table")]
+    partial class Add_Image_Column_To_Post_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
