@@ -57,7 +57,7 @@ namespace Pempo_backend.Controllers
         public async Task<ActionResult<Post>> GetPost(int id)
         {
             try
-            {                
+            {
                 var post = _context.tblPost.AsNoTracking().Where(p => p.Id == id).FirstOrDefault();
                 var comments = await _context.tblComments.AsNoTracking().Where(c => c.PostId == id).ToListAsync();
                 var likes = await _context.tblLikes.AsNoTracking().Where(l => l.PostId == id).ToListAsync();
@@ -75,12 +75,9 @@ namespace Pempo_backend.Controllers
                     return Ok(new
                     {
                         Message = "Post retrieved successfully!!",
-                        Data = new
-                        {
-                            post,
-                            comments,
-                            likes
-                        },
+                        post = post,
+                        comments = comments,
+                        likes = likes,                       
                         responeCode = ePempoStatus.success
                     });
                 }                              
